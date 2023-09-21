@@ -112,55 +112,28 @@ class HBNBCommand(cmd.Cmd):
     def emptyline(self):
         """ Overrides the emptyline method of CMD """
         pass
-   """ def do_create(self, args):
-        """ Create an object with given parameters """
-        if not args:
-            print("** class name missing **")
+    def do_create(self, arg):
+        """Create a new instance of a class and save """
+        if nor arg:
+            print("** class nawe missing **")
             return
-
-        parts = args.split(" ", 1)
-        class_name = parts[0]
-        params = parts[1] if len(parts) > 1 else ""
+        args = arg.split()
+        class_name = args[0]
         if class_name not in HBNBCommand.classes:
             print("** class doesn't exist **")
             return
-        attributes = {}
-        while params:
-            param, _, params = params.partition(" ")
-            key, _, value = param.partition("=")
-            if value.startswith('"') and value.endswith('"'):
-                value = value[1:-1]
-            if key in HBNBCommand.types:
-                try:
-                    if HBNBCommand.types[key] == int:
-                        value = int(value)
-                    elif HBNBCommand.types[key] == float:
-                        value = float(value)
-                except ValueError:
-                    pass
-            attributes[key] = value
-        new_instance = HBNBCommand.classes[class_name](**attributes)
-        storage.save()
-        print(new_instance.id)
-        storage.save()"""
-    def do_create(self, args):
-        """ Create an object of any class"""
-        try:
-            if not args:
-                raise SyntaxError()
-            arg_list = args.split(" ")
-            kw = {}
-            for arg in arg_list[1:]:
-                arg_splited = arg.split("=")
-                arg_splited[1] = eval(arg_splited[1])
-                if type(arg_splited[1]) is str:
-                    arg_splited[1] = arg_splited[1].replace("_", " ").replace('"', '\\"')
-                kw[arg_splited[0]] = arg_splited[1]
-        except SyntaxError:
-            print("** class name missing **")
-        except NameError:
-            print("** class doesn't exist **")
-        new_instance = HBNBCommand.classes[arg_list[0]](**kw)
+        params = ' '.join(args[1:])
+        kwargs = {}
+        param_list = params.split(',')
+        for parm in param_list:
+            key, value = param.strip().split('=')
+            if value.startwith('"') and value.endswith('"'):
+                kwargs[key] = value[1:-1].replace('_', ' ').replace('\\"', '"')
+            elif '.' in value:
+                kwargs[key] = float(value)
+            else:
+                kwargs[key] = int(value)
+        new_instance = HBNBCommand.classes[class_name](**kwargs)
         new_instance.save()
         print(new_instance.id)
 
@@ -342,21 +315,24 @@ class HBNBCommand(cmd.Cmd):
                     print("** attribute name missing **")
                     return
                 if not att_val:  # check for att_value
-                    print("** value missing **")
-                    return
-                # type cast as necessary
-                if att_name in HBNBCommand.types:
-                    att_val = HBNBCommand.types[att_name](att_val)
+#!/usr/bin/python3
+""" Console Module """
+import cmd
+import sys
+from models.base_model import BaseModel
+from models.__init__ import storage
+from models.user import User
+from models.place import Place
+from models.state import State
+from models.city import City
+from models.amenity import Amenity
+from models.review import Review
 
-                # update dictionary with name, value pair
-                new_dict.__dict__.update({att_name: att_val})
 
-        new_dict.save()  # save updates to file
+class HBNBCommand(cmd.Cmd):
+    """ Contains the functionality for the HBNB console"""
 
-    def help_update(self):
-        """ Help information for the update class """
-        print("Updates an object with new information")
-        print("Usage: update <className> <id> <attName> <attVal>\n")
+    # determines prompt for interactive/non-interactive modes
+    prompt = '(hbnb) ' if sys.__stdin__.isatty() else ''
 
-if __name__ == "__main__":
-    HBNBCommand().cmdloop()
+    classes = {
